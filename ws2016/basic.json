@@ -1,0 +1,60 @@
+{
+    "variables": {
+      "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+      "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+      "region": "eu-west-1"
+    },
+    "builders": [
+      {
+        "type": "amazon-ebs",
+        "access_key": "{{ user `aws_access_key` }}",
+        "secret_key": "{{ user `aws_secret_key` }}",
+        "region": "{{ user `region` }}",
+        "instance_type": "t2.micro",
+        "vpc_id": "vpc-0a7d8f21d5baff12a",
+        "subnet_id": "subnet-0e0dae7bf8b4d1ba9",
+        "source_ami_filter": {
+          "filters": {
+            "virtualization-type": "hvm",
+            "name": "Windows_Server-2016-English-Full-Base-*",
+            "root-device-type": "ebs"
+          },
+          "most_recent": true,
+          "owners": "amazon"
+        },
+        "ami_name": "EK-Std-WS2016-May2020-{{timestamp}}",
+        "user_data_file": "./bootstrap_win.txt",
+        "communicator": "winrm",
+        "winrm_username": "{{winrm_username}}",
+        "winrm_password": "{{winrm_password}}",
+        "run_tags": {
+            "Owner": "EK"
+          },
+          "tags": {
+              "Name": "WindowsServer-2016-May-Edition",
+              "OS": "Windows Server 2016"
+    }
+}
+    ],
+
+    "provisioners": [
+      {
+        "type": "powershell",
+        "script": "../scripts/createLocalUser.ps1"
+      },
+      {
+        "type": "powershell",
+        "script": "../scripts/securityScripts.ps1"
+      },
+      {
+        "type": "windows-restart"
+      },
+        {
+        "type": "powershell",
+        "inline": [
+          "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\InitializeInstance.ps1 -Schedule",
+          "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\SysprepInstance.ps1 -NoShutdown"
+        ]
+      }
+    ]
+  }
